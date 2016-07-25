@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import json
 
 CELL_WIDTH = 32
 CELL_HEIGHT = 32
@@ -33,7 +34,7 @@ def normalize_image(img):
 
 
     pers_src = np.float32([x[0] for x in approx_contour][:4])
-    print('Edges :', len(approx_contour))
+    # print('Edges :', len(approx_contour))
     idx = np.argmin(pers_src[:,0] + pers_src[:,1])
     perm = list(range(idx, 4)) + list(range(0, idx))
     pers_src = pers_src[perm, :]
@@ -47,19 +48,15 @@ def normalize_image(img):
 def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
-img = cv2.imread('20160724-222718/one1.JPG')
+while True:
+    img = cv2.imread('20160724-222718/one1.jpg')
+    dst = normalize_image(img)
+    sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
+    big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3)
+    np.save('sis.npy', big_array / 255.)
 
-t0 = time.time()
-dst = normalize_image(img)
-print(time.time()-t0)
+    # plt.imshow(dst)
+    # plt.show()
+    cv2.imshow('test', dst)
+    cv2.waitKey(100)
 
-sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
-
-for i in range(COLS):
-    for j in range(ROWS):
-        #plt.imshow(sis[i][j])
-        cv2.imwrite('small2/test%d%d.png' % (i, j), sis[i][j])
-        #cv2.waitKey(500)
-
-#plt.imshow(sis[0][0])
-#plt.show()

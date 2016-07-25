@@ -12,8 +12,14 @@ NEW_HEIGHT = CELL_HEIGHT * ROWS
 
 def normalize_image(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)[1]
+    binary = cv2.threshold(gray, 160, 255, cv2.THRESH_BINARY)[1]
+    # plt.imshow(binary)
+    # plt.show()
     contours = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    
+    # cv2.drawContours(img, contours, -1, (255, 0, 0), 10)
+    # plt.imshow(img)
+    # plt.show()
 
     real_contour = None
 
@@ -22,13 +28,12 @@ def normalize_image(img):
         if area < 0.1 or area > 0.97 : continue
         real_contour = contours[i]
 
-
     epsilon = 0.1 * cv2.arcLength(real_contour, True)
     approx_contour = cv2.approxPolyDP(real_contour, epsilon, True)
 
-    # cv2.drawContours(img, [approx_contour], 0, rand_color(), 10)
 
     pers_src = np.float32([x[0] for x in approx_contour][:4])
+    print('Edges :', len(approx_contour))
     idx = np.argmin(pers_src[:,0] + pers_src[:,1])
     perm = list(range(idx, 4)) + list(range(0, idx))
     pers_src = pers_src[perm, :]
@@ -42,7 +47,7 @@ def normalize_image(img):
 def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
-img = cv2.imread('20160724-222718/IMG_2396.JPG')
+img = cv2.imread('20160724-222718/one1.JPG')
 
 t0 = time.time()
 dst = normalize_image(img)
@@ -53,7 +58,7 @@ sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
 for i in range(COLS):
     for j in range(ROWS):
         #plt.imshow(sis[i][j])
-        cv2.imwrite('small/test%d%d.png' % (i, j), sis[i][j])
+        cv2.imwrite('small2/test%d%d.png' % (i, j), sis[i][j])
         #cv2.waitKey(500)
 
 #plt.imshow(sis[0][0])

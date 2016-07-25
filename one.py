@@ -13,12 +13,14 @@ NEW_HEIGHT = CELL_HEIGHT * ROWS
 
 def normalize_image(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    binary = cv2.threshold(gray, 160, 255, cv2.THRESH_BINARY)[1]
+    binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)[1]
     # plt.imshow(binary)
     # plt.show()
     contours = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
     
-    # cv2.drawContours(img, contours, -1, (255, 0, 0), 10)
+    cv2.drawContours(img, contours, -1, (255, 0, 0), 10)
+    cv2.imshow('original', img)
+    cv2.waitKey(100)
     # plt.imshow(img)
     # plt.show()
 
@@ -26,12 +28,21 @@ def normalize_image(img):
 
     for i in range(len(contours)):
         area = cv2.contourArea(contours[i]) / (img.shape[0] * img.shape[1])
-        if area < 0.1 or area > 0.97 : continue
+        if area < 0.1 or area > 0.8 : continue
         real_contour = contours[i]
+        epsilon = 0.05 * cv2.arcLength(real_contour, True)
+        approx_contour = cv2.approxPolyDP(real_contour, epsilon, True)
+        if len(approx_contour) == 4:
+            break
+        else:
+            real_contour = None
+    
+    if real_contour is None:
+        return None
 
-    epsilon = 0.1 * cv2.arcLength(real_contour, True)
-    approx_contour = cv2.approxPolyDP(real_contour, epsilon, True)
 
+    if len(approx_contour) != 4:
+        return None
 
     pers_src = np.float32([x[0] for x in approx_contour][:4])
     # print('Edges :', len(approx_contour))
@@ -48,15 +59,24 @@ def normalize_image(img):
 def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
+cap = cv2.VideoCapture(0)
+cap.set(cv2.cv.CV_CAP_PROP_FPS, 1)
+
+cnt = 0
 while True:
-    img = cv2.imread('20160724-222718/one1.jpg')
+    cnt += 1
+    print(cnt)
+    # img = cv2.imread('20160724-222718/one%d.jpg' % ((cnt%2)+1))
+    img = cap.read()[1]
     dst = normalize_image(img)
+    if dst is None:
+        continue
+    print('XD')
     sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
     big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3)
     np.save('sis.npy', big_array / 255.)
 
     # plt.imshow(dst)
     # plt.show()
-    cv2.imshow('test', dst)
-    cv2.waitKey(100)
+    cv2.imshow('dst', dst)
 

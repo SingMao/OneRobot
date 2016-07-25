@@ -1,21 +1,25 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
-NEW_WIDTH = 320
-NEW_HEIGHT = 320
+CELL_WIDTH = 32
+CELL_HEIGHT = 32
+ROWS = 10
+COLS = 10
+NEW_WIDTH = CELL_WIDTH * COLS
+NEW_HEIGHT = CELL_HEIGHT * ROWS
 
 def normalize_image(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     binary = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)[1]
-    contours, hierarchy = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
     real_contour = None
 
     for i in range(len(contours)):
         area = cv2.contourArea(contours[i]) / (img.shape[0] * img.shape[1])
         if area < 0.1 or area > 0.97 : continue
-        print(i, area)
         real_contour = contours[i]
 
 
@@ -35,9 +39,22 @@ def normalize_image(img):
     dst = cv2.warpPerspective(img, pers_transform, (NEW_WIDTH, NEW_HEIGHT))
     return dst
 
-img = cv2.imread('20160724-222718/IMG_2393.JPG')
+def split_image(img, cw, ch, w, h):
+    return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
+img = cv2.imread('20160724-222718/IMG_2396.JPG')
+
+t0 = time.time()
 dst = normalize_image(img)
+print(time.time()-t0)
 
-plt.imshow(dst)
-plt.show()
+sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
+
+for i in range(COLS):
+    for j in range(ROWS):
+        #plt.imshow(sis[i][j])
+        cv2.imwrite('small/test%d%d.png' % (i, j), sis[i][j])
+        #cv2.waitKey(500)
+
+#plt.imshow(sis[0][0])
+#plt.show()

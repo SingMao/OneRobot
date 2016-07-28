@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import json
+import subprocess
+import os
+import fcntl
 
 CELL_WIDTH = 32
 CELL_HEIGHT = 32
@@ -18,11 +21,9 @@ def normalize_image(img):
     # plt.show()
     contours = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
     
-    cv2.drawContours(img, contours, -1, (255, 0, 0), 10)
-    cv2.imshow('original', img)
-    cv2.waitKey(100)
-    # plt.imshow(img)
-    # plt.show()
+    # cv2.drawContours(img, contours, -1, (255, 0, 0), 10)
+    # cv2.imshow('original', img)
+    # cv2.waitKey(100)
 
     real_contour = None
 
@@ -39,7 +40,6 @@ def normalize_image(img):
     
     if real_contour is None:
         return None
-
 
     if len(approx_contour) != 4:
         return None
@@ -60,23 +60,41 @@ def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
 cap = cv2.VideoCapture(0)
-cap.set(cv2.cv.CV_CAP_PROP_FPS, 1)
+# cap.set(cv2.cv.CV_CAP_PROP_FPS, 1)
+
+torch_process = subprocess.Popen(
+    ['th', 'luas/classify.lua', 'model_best.t7', 'sis.npy'],
+    stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+
+imgpath = '20160724-222718'
+imglist = [os.path.join(imgpath, x) for x in os.listdir(imgpath)]
 
 cnt = 0
 while True:
     cnt += 1
-    print(cnt)
-    # img = cv2.imread('20160724-222718/one%d.jpg' % ((cnt%2)+1))
+    print('It %d' % cnt)
+    imgidx = cnt % len(imglist)
+    # img = cv2.imread(imglist[imgidx])
     img = cap.read()[1]
     dst = normalize_image(img)
     if dst is None:
         continue
-    print('XD')
     sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
     big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3)
     np.save('sis.npy', big_array / 255.)
 
+    torch_process.stdin.write('1\n')
+    # torch_process.stdin.flush()
+    out = torch_process.stdout.readline()
+    out = [int(x) for x in out.strip().split()]
+
+    ok = 0
+    for i in range(100):
+        if out[i] == i//10:
+            ok += 1
+    print('%d %%' % ok)
+
     # plt.imshow(dst)
     # plt.show()
-    cv2.imshow('dst', dst)
+    # cv2.imshow('dst', dst)
 

@@ -88,6 +88,8 @@ while True:
     out = torch_process.stdout.readline()
     out = [int(x) for x in out.strip().split()]
 
+    print(np.array(out).reshape((10, 10)))
+
     ok = 0
     for i in range(100):
         if out[i] == i//10:

@@ -44,6 +44,9 @@ def normalize_image(img):
     if len(approx_contour) != 4:
         return None
 
+    # cv2.drawContours(img, [real_contour], 0, (255, 0, 0), 10)
+    # cv2.imshow('cont', img)
+
     pers_src = np.float32([x[0] for x in approx_contour][:4])
     # print('Edges :', len(approx_contour))
     idx = np.argmin(pers_src[:,0] + pers_src[:,1])
@@ -61,6 +64,8 @@ def split_image(img, cw, ch, w, h):
 
 cap = cv2.VideoCapture(0)
 # cap.set(cv2.cv.CV_CAP_PROP_FPS, 1)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 torch_process = subprocess.Popen(
     ['th', 'luas/classify.lua', 'model_best.t7', 'sis.npy'],
@@ -76,17 +81,34 @@ while True:
     imgidx = cnt % len(imglist)
     # img = cv2.imread(imglist[imgidx])
     img = cap.read()[1]
+
+    print(img.shape)
+
+    cv2.imshow('original', img)
+    cv2.waitKey(10)
+
     dst = normalize_image(img)
     if dst is None:
         continue
+
+    means = np.mean(dst, (0, 1))
+    std = np.std(dst, (0, 1))
+
+    # dst = (dst - means) / std
+    # print(np.mean(dst), np.std(dst))
+
+    cv2.imshow('dst', dst)
+
     sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
-    big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3)
-    np.save('sis.npy', big_array / 255.)
+    big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3) / 255.
+    np.save('sis.npy', big_array)
 
     torch_process.stdin.write('1\n')
     # torch_process.stdin.flush()
     out = torch_process.stdout.readline()
     out = [int(x) for x in out.strip().split()]
+
+    if len(out) != 100: continue
 
     print(np.array(out).reshape((10, 10)))
 

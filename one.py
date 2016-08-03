@@ -76,49 +76,52 @@ imglist = [os.path.join(imgpath, x) for x in os.listdir(imgpath)]
 
 cnt = 0
 while True:
-    cnt += 1
-    print('It %d' % cnt)
-    imgidx = cnt % len(imglist)
-    # img = cv2.imread(imglist[imgidx])
-    img = cap.read()[1]
+    try:
+        cnt += 1
+        print('It %d' % cnt)
+        imgidx = cnt % len(imglist)
+        # img = cv2.imread(imglist[imgidx])
+        img = cap.read()[1]
 
-    print(img.shape)
+        print(img.shape)
 
-    cv2.imshow('original', img)
-    cv2.waitKey(10)
+        cv2.imshow('original', img)
+        cv2.waitKey(10)
 
-    dst = normalize_image(img)
-    if dst is None:
-        continue
+        dst = normalize_image(img)
+        if dst is None:
+            continue
 
-    means = np.mean(dst, (0, 1))
-    std = np.std(dst, (0, 1))
+        means = np.mean(dst, (0, 1))
+        std = np.std(dst, (0, 1))
 
-    # dst = (dst - means) / std
-    # print(np.mean(dst), np.std(dst))
+        # dst = (dst - means) / std
+        # print(np.mean(dst), np.std(dst))
 
-    cv2.imshow('dst', dst)
+        cv2.imshow('dst', dst)
 
-    sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
-    big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3) / 255.
-    np.save('sis.npy', big_array)
+        sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
+        big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3) / 255.
+        np.save('sis.npy', big_array)
 
-    torch_process.stdin.write('1\n')
-    # torch_process.stdin.flush()
-    out = torch_process.stdout.readline()
-    out = [int(x) for x in out.strip().split()]
+        torch_process.stdin.write('1\n')
+        # torch_process.stdin.flush()
+        out = torch_process.stdout.readline()
+        out = [int(x) for x in out.strip().split()]
 
-    if len(out) != 100: continue
+        if len(out) != 100: continue
 
-    print(np.array(out).reshape((10, 10)))
+        print(np.array(out).reshape((10, 10)))
 
-    ok = 0
-    for i in range(100):
-        if out[i] == i//10:
-            ok += 1
-    print('%d %%' % ok)
+        ok = 0
+        for i in range(100):
+            if out[i] == i//10:
+                ok += 1
+        print('%d %%' % ok)
 
-    # plt.imshow(dst)
-    # plt.show()
-    # cv2.imshow('dst', dst)
-
+        # plt.imshow(dst)
+        # plt.show()
+        # cv2.imshow('dst', dst)
+    except KeyboardInterrupt:
+        torch_process.terminate()
+        break

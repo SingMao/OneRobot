@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 *.npy
+*.png
+*.jpg
+*.JPG
+*.jpeg
+*.pickle
+*.th
+*.log

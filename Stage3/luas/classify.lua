@@ -64,7 +64,39 @@ function predict(img_array, n)
   -- Get the top 5 class indexes and probabilities
   local probs, indexes = output:topk(N, true, true)
 
-  return indexes:squeeze()
+  --for i = 1, torch.sqrt(probs:size(1)) do
+    --for j = 1, torch.sqrt(probs:size(1)) do
+      ----io.stderr:write(probs[i][j])
+      --io.stderr:write(string.format('%.3f ', probs[(i-1)*16 + j][1]))
+    --end
+    --io.stderr:write('\n')
+  --end
+
+  pos_idx = {}
+  pos_prob = {}
+  for i = 1, indexes:size(1) do
+    if indexes[i][1] == 2 then
+      --positive[i] = probs[i][1]
+      table.insert(pos_idx, i)
+      table.insert(pos_prob, probs[i][1])
+    end
+  end
+  pos_prob = torch.Tensor(pos_prob)
+  sorted_prob, sorted_idx = torch.sort(pos_prob, true)
+  for i = 1, sorted_prob:size(1) do
+    io.stderr:write(string.format('%.4f ', sorted_prob[i])) 
+  end
+  io.stderr:write('\n')
+
+  real_pred = torch.ones(indexes:size(1))
+  top_x = 10
+  for i = 1, top_x do
+    real_idx = pos_idx[sorted_idx[i]]
+    real_pred[real_idx] = 2
+  end
+  return real_pred
+
+  --return indexes:squeeze()
   --print(indexes:size())
 
   --return indexes[1] 

@@ -1,11 +1,6 @@
 .DS_Store
 __pycache__/
 *.pyc
-*.npy
-*.png
-*.jpg
-*.JPG
-*.jpeg
 *.pickle
 *.th
 *.log

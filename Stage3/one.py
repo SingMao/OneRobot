@@ -65,8 +65,8 @@ def split_image(img, cw, ch, w, h):
 
 cap = cv2.VideoCapture(0)
 # cap.set(cv2.cv.CV_CAP_PROP_FPS, 1)
-# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 720)
 
 torch_process = subprocess.Popen(
     ['th', 'luas/classify.lua', 'model_best.t7', 'sis.npy'],
@@ -75,11 +75,11 @@ torch_process = subprocess.Popen(
 imgpath = '20160724-222718'
 imglist = [os.path.join(imgpath, x) for x in os.listdir(imgpath)]
 
-cam.calibrate(cap)
+# cam.calibrate(cap)
 
 cnt = 0
 pers_transform = None
-while cnt < 5:
+while cnt < 500:
     try:
         print('It %d' % cnt)
         # imgidx = cnt % len(imglist)

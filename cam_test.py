@@ -31,5 +31,5 @@ while True:
     # cv2.circle(img, (400, 320), 10, (255, 0, 0), 10)
 
     cv2.imshow('test', img)
-    cv2.imwrite('honhon.png', img)
+    # cv2.imwrite('honhon.png', img)
     cv2.waitKey(10)

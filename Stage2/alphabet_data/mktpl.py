@@ -2,12 +2,12 @@ import cv2
 import numpy as np
 
 
-img = cv2.imread('abcdef.jpg')
-img = cv2.resize(img, (0, 0), None, 0.2, 0.2)
+img = cv2.imread('../../ghijkl.png')
+# img = cv2.resize(img, (0, 0), None, 0.2, 0.2)
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 img2 = img.copy()
-img2[:320,:,:] = 0
+# img2[:320,:,:] = 0
 
 NR, NC = 5, 6
 

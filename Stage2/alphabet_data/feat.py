@@ -17,8 +17,8 @@ path = sys.argv[1] if len(sys.argv) >= 2 else 'da.png'
 
 cap = cv2.VideoCapture(0)
 
-mtx = np.load('mtx.npy')
-dist = np.load('dist.npy')
+# mtx = np.load('mtx.npy')
+# dist = np.load('dist.npy')
 
 tpl = cv2.imread('tpl.png')
 tpl = cv2.resize(tpl, (0, 0), None, 0.15, 0.15)
@@ -40,13 +40,16 @@ tpl_hue = img2huevec(orig_tpl) * tpl_mask[:,:,np.newaxis]
 # plt.imshow(tpl)
 # plt.show()
 
+if False:
+    ok, img = cap.read()
+    cv2.imwrite('hh.png', img)
 
 cal = cv2.imread('hh.png')
 objp = np.zeros((6*9,3), np.float32)
 objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2) * 0.02816 * 1280 + 150
 
 ret, bdr = cv2.findChessboardCorners(cal, (6, 9))
-ret, rvec, tvec = cv2.solvePnP(objp, bdr, mtx, dist)
+# ret, rvec, tvec = cv2.solvePnP(objp, bdr, mtx, dist)
 
 bdr = np.array(bdr)
 p_src = bdr[:,0,:].astype(np.float32)
@@ -96,23 +99,6 @@ while True:
     orig_img2 = cv2.resize(orig_img2, (0, 0), None, shrink_ratio, shrink_ratio)
     img2_hue = img2huevec(orig_img2)
 
-
-    # kps, feats = get_sift_kp_feat_gray(img2)
-    # kz, fz = get_sift_kp_feat_gray(tpl)
-
-    # bf = cv2.BFMatcher()
-    # matches = bf.knnMatch(feats, fz, k=2)
-    # # matches = bf.match(feats, fz)
-    # # matches = sorted(matches, key = lambda x:x.distance)
-
-    # good = []
-    # for m,n in matches:
-        # if m.distance < 1*n.distance:
-            # good.append([m])
-
-    # img3 = cv2.drawMatchesKnn(img2, kps, tpl, kz, good[:20], None, flags=2)
-
-    ###
 
     def rotate(img, deg):
         rows, cols = img.shape[:2]

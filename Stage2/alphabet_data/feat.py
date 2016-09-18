@@ -37,15 +37,26 @@ def rotate_scale(img, deg, rx, ry):
     return cv2.resize(r, (0, 0), None, rx, ry)
 
 def process_template(tpl):
-    tpl = cv2.resize(tpl, (0, 0), None, 0.1, 0.1)
+    rgb = tpl[:,:,:3]
+    alpha = tpl[:,:,3]
+
+    tpl_mask = (alpha != 0).astype(np.uint8)
+
+    num_good_pixels = int(np.sum(tpl_mask))
+
+    rgb *= tpl_mask[:,:,np.newaxis]
+
+    avg_rgb = np.mean(rgb, axis=(0, 1)) * (tpl.shape[0] * tpl.shape[1]) / num_good_pixels
+    newrgb = tpl_mask[:,:,np.newaxis] * avg_rgb
+
+    return newrgb.astype(np.uint8), tpl_mask.astype(np.float32)
 
 path = sys.argv[1] if len(sys.argv) >= 2 else 'da.png'
 
 cap = cv2.VideoCapture(0)
 
-tpl = cv2.imread('tpl.png')
-tpl = process_template(tpl)
-tpl_mask = (tpl[:,:,0] < 255).astype('float32')
+tpl = cv2.imread('tpl_b.png', cv2.CV_LOAD_IMAGE_UNCHANGED)
+tpl, tpl_mask = process_template(tpl)
 orig_tpl = tpl
 
 tpls = [] #(r, theta, tpl, tpl_hue, otpl)
@@ -53,7 +64,7 @@ tpls_mini = []
 
 shrink_ratio = 0.5
 
-for r in np.linspace(0.5, 0.5, 1):
+for r in np.linspace(0.45, 0.45, 1):
     for theta in np.linspace(0, 360, 36+1)[:-1]:
         _tpl = rotate_scale(tpl, theta, r, r)
         _otpl = rotate_scale(orig_tpl, theta, r, r)
@@ -118,9 +129,9 @@ while True:
     img2_mini_canny /= np.max(img2_mini_canny)
     img2_mini_hue = img2huevec_rand(img2_mini)
 
-    cv2.imshow('img2', img2)
+    # cv2.imshow('img2', img2)
     cv2.imshow('img2_canny', img2_canny)
-    cv2.waitKey(10)
+    # cv2.waitKey(10)
 
     candidates = [] #(val, r, th)
     t0 = time.time()
@@ -129,7 +140,7 @@ while True:
     for r, th, _tpl, _hue, _otpl in tpls_mini:
         mat = cv2.matchTemplate(img2_mini_canny, _tpl, cv2.TM_CCORR_NORMED)
         total_sz = _hue.shape[0] * _hue.shape[1]
-        mat += (total_sz-cv2.matchTemplate(img2_mini_hue, _hue, cv2.TM_SQDIFF))  / total_sz * 0.2
+        mat += (total_sz-cv2.matchTemplate(img2_mini_hue, _hue, cv2.TM_SQDIFF))  / total_sz * 0.3
         a, b = mat.shape
         mp[:a,:b] = np.maximum(mp[:a,:b], mat)
         _, Val, _, Loc = cv2.minMaxLoc(mat)
@@ -198,3 +209,4 @@ while True:
         # cv2.imshow('tpl_r_hue1', tpl_r_hue[:,:,1])
 
         cv2.waitKey(50)
+        break

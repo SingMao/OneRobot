@@ -54,7 +54,7 @@ def edge_detect(img, mode, blur_size, erode_size, dilate_size):
     # plt.show()
     # cv2.waitKey(100)
     binary = cv2.threshold(closing, 127, 255, cv2.THRESH_BINARY)[1]
-    # cv2.imshow('洪士號', binary)
+    # cv2.imshow('111', binary)
     return binary
 
     # plt.imshow(binary, cmap='Greys_r')

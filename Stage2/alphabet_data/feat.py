@@ -55,7 +55,7 @@ path = sys.argv[1] if len(sys.argv) >= 2 else 'da.png'
 
 cap = cv2.VideoCapture(0)
 
-tpl = cv2.imread('tpl_b.png', cv2.CV_LOAD_IMAGE_UNCHANGED)
+tpl = cv2.imread('tpl_f.png', cv2.CV_LOAD_IMAGE_UNCHANGED)
 tpl, tpl_mask = process_template(tpl)
 orig_tpl = tpl
 

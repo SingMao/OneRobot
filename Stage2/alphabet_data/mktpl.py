@@ -2,12 +2,15 @@ import cv2
 import numpy as np
 
 
-img = cv2.imread('../../ghijkl.png')
-# img = cv2.resize(img, (0, 0), None, 0.2, 0.2)
+img = cv2.imread('yz.jpg')
+img = cv2.resize(img, (0, 0), None, 0.2, 0.2)
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 img2 = img.copy()
-# img2[:320,:,:] = 0
+img2[:380,:,:] = 0
+
+cv2.imshow('img', img2)
+cv2.waitKey(0)
 
 NR, NC = 5, 6
 
@@ -38,5 +41,4 @@ for i in range(2):
         cv2.imwrite('%d-%d.png' % (i, j), x)
 
 cv2.imshow('img', img)
-# cv2.imshow('corners', (corners>0.02).astype('float32'))
 cv2.waitKey(0)

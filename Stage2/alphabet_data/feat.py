@@ -69,7 +69,7 @@ p_dst = objp[:,:2].astype(np.float32)
 pers_transform, mask = cv2.findHomography(p_src, p_dst)
 
 def match_alphabet(alp, img):
-    tpl = cv2.imread('tpl_%s.png' % alp, cv2.CV_LOAD_IMAGE_UNCHANGED)
+    tpl = cv2.imread('tpl/tpl_%s.png' % alp, cv2.CV_LOAD_IMAGE_UNCHANGED)
     tpl, tpl_mask = process_template(tpl)
     orig_tpl = tpl
 
@@ -120,20 +120,20 @@ def match_alphabet(alp, img):
     for r, th, _tpl, _hue, _otpl in tpls_mini:
         mat = cv2.matchTemplate(img2_mini_canny, _tpl, cv2.TM_CCORR_NORMED)
         total_sz = _hue.shape[0] * _hue.shape[1]
-        mat += (total_sz-cv2.matchTemplate(img2_mini_hue, _hue, cv2.TM_SQDIFF))  / total_sz * 0.3
+        mat += (total_sz-cv2.matchTemplate(img2_mini_hue, _hue, cv2.TM_SQDIFF))  / total_sz * 0.2
         a, b = mat.shape
         mp[:a,:b] = np.maximum(mp[:a,:b], mat)
         _, Val, _, Loc = cv2.minMaxLoc(mat)
         Val = -Val
         candidates.append((Val, r, th))
     candidates.sort()
-    print(len(candidates))
+    # print(len(candidates))
     candidates = candidates[:5]
     candidates_set = set()
     for val, r, th in candidates:
         candidates_set.add((r, th))
 
-    for x in candidates: print(x)
+    # for x in candidates: print(x)
 
     print('Stage 1 Time : %.2f, Val : %.4f' % (time.time() - t0, candidates[0][0]))
 
@@ -169,28 +169,35 @@ def match_alphabet(alp, img):
     # cv2.rectangle(orig_img2, (startX, startY), (endX, endY), (255, 0, 0), 2)
     # cv2.rectangle(img2_hue, (startX, startY), (endX, endY), (255, 0, 0), 2)
 
+    (cenX, cenY) = ((startX+endX)//2, (startY+endY)//2)
+
+    cv2.circle(img2, (cenX, cenY), 3, (255, 255, 0), 2)
+
+    print(alp, 'Center at', (cenX, cenY))
+    
+
     ###
 
     mp = cv2.normalize(mp, None, 0., 1., cv2.NORM_MINMAX)
-    print(cv2.minMaxLoc(mp))
+    # print(cv2.minMaxLoc(mp))
 
     cv2.imshow('mp', mp)
     # cv2.imshow('tpl_r', tpl_r)
-    cv2.imshow('tpl', btpl)
+    # cv2.imshow('tpl', btpl)
     cv2.imshow('otpl', botpl)
     # cv2.imshow('tpl_hue', tpl_hue)
     cv2.imshow('img2', img2)
     # cv2.imshow('orig_img2', orig_img2)
     # cv2.imshow('img3', img3)
-    cv2.imshow('img2_hue0', img2_hue[:,:,0])
-    cv2.imshow('img2_hue1', img2_hue[:,:,1])
+    # cv2.imshow('img2_hue0', img2_hue[:,:,0])
+    # cv2.imshow('img2_hue1', img2_hue[:,:,1])
     # cv2.imshow('tpl_r_hue0', tpl_r_hue[:,:,0])
     # cv2.imshow('tpl_r_hue1', tpl_r_hue[:,:,1])
 
     cv2.waitKey(50)
 
 
-alphabet = 'abcdef'
+alphabet = 'abcdefghijklmnopqrstuvwxyz'
 cnt = 0
 
 while True:

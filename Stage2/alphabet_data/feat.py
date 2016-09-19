@@ -51,46 +51,7 @@ def process_template(tpl):
 
     return newrgb.astype(np.uint8), tpl_mask.astype(np.float32)
 
-path = sys.argv[1] if len(sys.argv) >= 2 else 'da.png'
-
 cap = cv2.VideoCapture(0)
-
-tpl = cv2.imread('tpl_f.png', cv2.CV_LOAD_IMAGE_UNCHANGED)
-tpl, tpl_mask = process_template(tpl)
-orig_tpl = tpl
-
-tpls = [] #(r, theta, tpl, tpl_hue, otpl)
-tpls_mini = []
-
-shrink_ratio = 0.5
-
-for r in np.linspace(0.45, 0.45, 1):
-    for theta in np.linspace(0, 360, 36+1)[:-1]:
-        _tpl = rotate_scale(tpl, theta, r, r)
-        _otpl = rotate_scale(orig_tpl, theta, r, r)
-        _mask = rotate_scale(tpl_mask, theta, r, r)
-        _tpl = cv2.Canny(_tpl, 100, 200).astype(np.float32)
-        R = 1
-        _tpl = cv2.GaussianBlur(_tpl, (3*R, 3*R), R) / 40.
-        _tpl = np.minimum(_tpl, 1) - 0.8
-        _tpl = np.maximum(_tpl, -_mask)
-        _hue = img2huevec(_otpl) * _mask[:,:,np.newaxis]
-
-        tpls.append((r, theta, _tpl, _hue, _otpl))
-
-        _tpl = cv2.resize(_tpl, (0, 0), None, shrink_ratio, shrink_ratio)
-        _otpl = cv2.resize(_otpl, (0, 0), None, shrink_ratio, shrink_ratio)
-        _hue = cv2.resize(_hue, (0, 0), None, shrink_ratio, shrink_ratio)
-
-        tpls_mini.append((r, theta, _tpl, _hue, _otpl))
-
-        # print(r, theta)
-        # cv2.imshow('tpl', _tpl)
-        # cv2.imshow('otpl', _otpl)
-        # cv2.imshow('mask', _mask)
-        # cv2.waitKey(100)
-
-# exit(0)
 
 if False:
     ok, img = cap.read()
@@ -101,24 +62,43 @@ objp = np.zeros((6*9,3), np.float32)
 objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2) * 0.02816 * 1280 + 150
 
 ret, bdr = cv2.findChessboardCorners(cal, (6, 9))
-# ret, rvec, tvec = cv2.solvePnP(objp, bdr, mtx, dist)
 
 bdr = np.array(bdr)
 p_src = bdr[:,0,:].astype(np.float32)
 p_dst = objp[:,:2].astype(np.float32)
 pers_transform, mask = cv2.findHomography(p_src, p_dst)
-print(pers_transform)
 
+def match_alphabet(alp, img):
+    tpl = cv2.imread('tpl_%s.png' % alp, cv2.CV_LOAD_IMAGE_UNCHANGED)
+    tpl, tpl_mask = process_template(tpl)
+    orig_tpl = tpl
 
-while True:
-    ok = False
-    while not ok:
-        ok, img = cap.read()
-    # img = cv2.imread(path)
+    tpls = [] #(r, theta, tpl, tpl_hue, otpl)
+    tpls_mini = []
 
-    # dst = cv2.warpPerspective(cal, pers_transform, (480, 540))
+    shrink_ratio = 0.5
+
+    for r in np.linspace(0.45, 0.45, 1):
+        for theta in np.linspace(0, 360, 36+1)[:-1]:
+            _tpl = rotate_scale(tpl, theta, r, r)
+            _otpl = rotate_scale(orig_tpl, theta, r, r)
+            _mask = rotate_scale(tpl_mask, theta, r, r)
+            _tpl = cv2.Canny(_tpl, 100, 200).astype(np.float32)
+            R = 1
+            _tpl = cv2.GaussianBlur(_tpl, (3*R, 3*R), R) / 40.
+            _tpl = np.minimum(_tpl, 1) - 0.8
+            _tpl = np.maximum(_tpl, -_mask)
+            _hue = img2huevec(_otpl) * _mask[:,:,np.newaxis]
+
+            tpls.append((r, theta, _tpl, _hue, _otpl))
+
+            _tpl = cv2.resize(_tpl, (0, 0), None, shrink_ratio, shrink_ratio)
+            _otpl = cv2.resize(_otpl, (0, 0), None, shrink_ratio, shrink_ratio)
+            _hue = cv2.resize(_hue, (0, 0), None, shrink_ratio, shrink_ratio)
+
+            tpls_mini.append((r, theta, _tpl, _hue, _otpl))
+
     img2 = cv2.warpPerspective(img, pers_transform, (480, 600))
-    # gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     img2 = cv2.resize(img2, (0, 0), None, 0.5, 0.5)
     img2_canny = cv2.Canny(img2, 100, 200).astype(np.float32)
     img2_canny /= np.max(img2_canny)
@@ -194,19 +174,35 @@ while True:
     mp = cv2.normalize(mp, None, 0., 1., cv2.NORM_MINMAX)
     print(cv2.minMaxLoc(mp))
 
-    while True:
-        cv2.imshow('mp', mp)
-        # cv2.imshow('tpl_r', tpl_r)
-        cv2.imshow('tpl', btpl)
-        cv2.imshow('otpl', botpl)
-        # cv2.imshow('tpl_hue', tpl_hue)
-        cv2.imshow('img2', img2)
-        # cv2.imshow('orig_img2', orig_img2)
-        # cv2.imshow('img3', img3)
-        cv2.imshow('img2_hue0', img2_hue[:,:,0])
-        cv2.imshow('img2_hue1', img2_hue[:,:,1])
-        # cv2.imshow('tpl_r_hue0', tpl_r_hue[:,:,0])
-        # cv2.imshow('tpl_r_hue1', tpl_r_hue[:,:,1])
+    cv2.imshow('mp', mp)
+    # cv2.imshow('tpl_r', tpl_r)
+    cv2.imshow('tpl', btpl)
+    cv2.imshow('otpl', botpl)
+    # cv2.imshow('tpl_hue', tpl_hue)
+    cv2.imshow('img2', img2)
+    # cv2.imshow('orig_img2', orig_img2)
+    # cv2.imshow('img3', img3)
+    cv2.imshow('img2_hue0', img2_hue[:,:,0])
+    cv2.imshow('img2_hue1', img2_hue[:,:,1])
+    # cv2.imshow('tpl_r_hue0', tpl_r_hue[:,:,0])
+    # cv2.imshow('tpl_r_hue1', tpl_r_hue[:,:,1])
 
-        cv2.waitKey(50)
-        break
+    cv2.waitKey(50)
+
+
+alphabet = 'abcdef'
+cnt = 0
+
+while True:
+    ok = False
+    while not ok:
+        ok, img = cap.read()
+
+    alp = alphabet[cnt % len(alphabet)]
+    match_alphabet(alp, img)
+    
+
+
+    cnt += 1
+
+    

@@ -6,7 +6,7 @@ import json
 import subprocess
 import os
 import fcntl
-import kinect
+from kinect2 import Kinect
 
 CELL_WIDTH = 32
 CELL_HEIGHT = 32
@@ -17,7 +17,7 @@ NEW_HEIGHT = CELL_HEIGHT * ROWS
 
 def normalize_image(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    binary = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY)[1]
+    binary = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)[1]
     # binary = cv2.Canny(gray, 50, 150, 10)
     # cv2.imshow('binary', binary)
     contours = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -64,42 +64,45 @@ def normalize_image(img):
 def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
-cap = cv2.VideoCapture(0)
-cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 960)
+# cap = cv2.VideoCapture(1)
+# cap.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 1280)
+# cap.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 960)
 
-# torch_process = subprocess.Popen(
-    # ['th', 'luas/classify.lua', 'model_best_binary_jitter_blur_weights2.t7', 'sis.npy'],
-    # stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+torch_process = subprocess.Popen(
+    ['th', 'luas/classify.lua', 'model_best_binary_jitter_blur_weights2.t7', 'sis.npy'],
+    stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
 
-# imgpath = 'img'
-# imglist = [os.path.join(imgpath, x) for x in os.listdir(imgpath)]
-
-# print('XD')
-# kinect.start()
-# print('XD')
+kin = Kinect()
 
 cnt = 0
 pers_transform = None
 naccu = None
 ncorrect = None
-while cnt < 500:
+while cnt < 10:
     cnt += 1
     try:
         time.sleep(1)
         # imgidx = cnt % len(imglist)
         # img = cv2.imread(imglist[imgidx])
         # print('It %d : %s' % (cnt, imglist[imgidx]))
-        os.system('v4l2-ctl -c exposure_auto=3')
+        # os.system('v4l2-ctl -d /dev/video1 -c exposure_auto=3')
         # os.system('v4l2-ctl -c exposure_absolute=20')
-        img = cap.read()[1]
+        # img = cap.read()[1]
 
-        print('aaa')
-        img2 = kinect.get_image()
-        print('IMG2', img2)
+        img = kin.get_image()
+
+        # if img is None:
+            # print('Kinect image MISERABLE !!!')
+            # continue
+
+        img_small = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+
+        # print('aaa')
+        # img2 = kinect.get_image()
+        # print('IMG2', img2)
 
         print(img.shape)
-        cv2.imshow('img', img)
+        cv2.imshow('img', img_small)
         cv2.waitKey(10)
 
         dst, pers_transform = normalize_image(img)
@@ -115,10 +118,11 @@ while cnt < 500:
         # print(np.mean(dst), np.std(dst))
 
         cv2.imshow('dst', dst)
-        cv2.waitKey(10)
-        continue
+        cv2.waitKey(100)
+        # continue
 
         sis = split_image(dst, CELL_WIDTH, CELL_HEIGHT, COLS, ROWS)
+        print(np.array(sis).shape)
         big_array = np.array(sis)[:,:,:,:,::-1].reshape(-1, CELL_WIDTH, CELL_HEIGHT, 3) / 255.
         np.save('sis.npy', big_array)
 
@@ -171,22 +175,22 @@ while cnt < 500:
         torch_process.terminate()
         break
     
-    print(naccu)
-    idx = np.argsort(np.reshape(naccu, (ROWS * COLS)))
-    top_x = 10
-    real = np.zeros(idx.shape)
-    for i in range(top_x):
-        real[idx[-(i + 1)]] = 1
-    real = np.reshape(real, (COLS, ROWS))
+print(naccu)
+idx = np.argsort(np.reshape(naccu, (ROWS * COLS)))
+top_x = 10
+real = np.zeros(idx.shape)
+for i in range(top_x):
+    real[idx[-(i + 1)]] = 1
+real = np.reshape(real, (COLS, ROWS))
 
-    acc = float((ncorrect == real).sum()) / (ROWS * COLS)
-    print('%d %%' % (acc * 100))
-    print('Positive predictions: %d' % real.sum())
-    print('True positives: %d' % np.logical_and(real, ncorrect).sum())
-    print('False positives: %d' % np.logical_and(real, np.logical_not(ncorrect)).sum())
-    print('False negatives: %d' % np.logical_and(ncorrect, np.logical_not(real)).sum())
+acc = float((ncorrect == real).sum()) / (ROWS * COLS)
+print('%d %%' % (acc * 100))
+print('Positive predictions: %d' % real.sum())
+print('True positives: %d' % np.logical_and(real, ncorrect).sum())
+print('False positives: %d' % np.logical_and(real, np.logical_not(ncorrect)).sum())
+print('False negatives: %d' % np.logical_and(ncorrect, np.logical_not(real)).sum())
 
-kinect.stop()
+# kinect.stop()
 torch_process.terminate()
 exit()
 

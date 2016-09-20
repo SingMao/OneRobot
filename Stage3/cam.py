@@ -1,7 +1,7 @@
 import cv2
 import time
 import os
-import pyuarm
+# import pyuarm
 import time
 import numpy as np
 from sk import ArmCalibrate
@@ -35,12 +35,12 @@ def get_maxpt(cap):
     cv2.waitKey(10)
     return maxpos
 
-uarm = pyuarm.uArm()
-uarm.attach_all_servos()
+# uarm = pyuarm.uArm()
+# uarm.attach_all_servos()
 
-uarm.write_servo_angle(pyuarm.SERVO_BOTTOM, 90, False)
-uarm.write_servo_angle(pyuarm.SERVO_LEFT, 90, False)
-uarm.write_servo_angle(pyuarm.SERVO_RIGHT, 30, False)
+# uarm.write_servo_angle(pyuarm.SERVO_BOTTOM, 90, False)
+# uarm.write_servo_angle(pyuarm.SERVO_LEFT, 90, False)
+# uarm.write_servo_angle(pyuarm.SERVO_RIGHT, 30, False)
 
 AC = ArmCalibrate()
 
@@ -103,3 +103,13 @@ def move_to(x, y):
     writeBR(theta, phi)
     time.sleep(1.)
     return AC.predict(uarm.read_servo_angle()[:3])
+
+if __name__ == '__main__':
+    cap = cv2.VideoCapture(0)
+    os.system('v4l2-ctl -c exposure_auto=1')
+    os.system('v4l2-ctl -c exposure_absolute=20')
+
+    while True:
+        maxpos = get_maxpt(cap)
+        print(maxpos)
+

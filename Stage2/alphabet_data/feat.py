@@ -51,7 +51,7 @@ def process_template(tpl):
 
     return newrgb.astype(np.uint8), tpl_mask.astype(np.float32)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 if False:
     ok, img = cap.read()

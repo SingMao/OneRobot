@@ -2,10 +2,11 @@ from __future__ import print_function
 import numpy as np
 import rospy
 from rospy.numpy_msg import numpy_msg
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 from nav_msgs.msg import Odometry
 from sensor_msgs import point_cloud2
 
+IMAGE_TOPIC = '/kinect2/sd/image_color_rect'
 CLOUD_TOPIC = '/rtabmap/cloud_map'
 # CLOUD_TOPIC = '/kinect2/hd/points'
 ODOM_TOPIC = '/rtabmap/odom'
@@ -28,8 +29,7 @@ def cloud_cb(msg):
     # msg = numpy_msg(msg)
     msg = point_cloud_to_numpy(msg)
     arr = msg[~np.isnan(msg['x'])]
-    floor = arr[arr['z'] < 0]
-    print(floor.shape)
+    print(arr.shape)
     # print(rawpoints.shape)
     # print(type(msg))
 
@@ -38,9 +38,14 @@ def odom_cb(msg):
     print(msg.pose.pose.orientation)
     print()
 
+def image_cb(msg):
+    arr = np.fromstring(msg.data, np.uint8).reshape((msg.width, msg.height, 3))
+    print(arr.shape)
+
 def run():
     cloudsub = rospy.Subscriber(CLOUD_TOPIC, PointCloud2, cloud_cb)
     # odomsub = rospy.Subscriber(ODOM_TOPIC, Odometry, odom_cb)
+    # imagesub = rospy.Subscriber(IMAGE_TOPIC, Image, image_cb)
     rospy.spin()
 
 if __name__ == '__main__':

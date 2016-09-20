@@ -79,6 +79,9 @@ function predict(img_array, n)
       --positive[i] = probs[i][1]
       table.insert(pos_idx, i)
       table.insert(pos_prob, probs[i][1])
+    --else
+      --table.insert(pos_idx, i)
+      --table.insert(pos_prob, 1.0 - probs[i][1])
     end
   end
   pos_prob = torch.Tensor(pos_prob)
@@ -89,7 +92,8 @@ function predict(img_array, n)
   io.stderr:write('\n')
 
   real_pred = torch.ones(indexes:size(1))
-  top_x = 10
+  good_x = 10
+  top_x = (sorted_prob:size(1) > good_x) and good_x or sorted_prob:size(1)
   for i = 1, top_x do
     real_idx = pos_idx[sorted_idx[i]]
     real_pred[real_idx] = 2

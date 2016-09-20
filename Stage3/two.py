@@ -63,7 +63,7 @@ def split_image(img, cw, ch, w, h):
     return [[img[i*cw:(i+1)*cw,j*ch:(j+1)*ch] for j in range(h)] for i in range(w)]
 
 torch_process = subprocess.Popen(
-    ['th', 'luas/classify.lua', 'model_best_binary_normal.t7', 'sis.npy'],
+    ['th', 'luas/classify.lua', 'model_best_binary_jitter_blur_weights2.t7', 'sis.npy'],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
 
 imgpath = 'img'

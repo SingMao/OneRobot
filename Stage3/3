@@ -1,0 +1,27 @@
+from __future__ import print_function
+import numpy as np
+import rospy
+from rospy.numpy_msg import numpy_msg
+from sensor_msgs.msg import Image
+
+import threading
+
+IMAGE_TOPIC = '/kinect2/sd/image_color_rect'
+
+image_data = None
+
+def image_cb(msg):
+    arr = np.fromstring(msg.data, np.uint8).reshape((msg.width, msg.height, 3))
+    print(arr.shape)
+
+def run():
+    imagesub = rospy.Subscriber(IMAGE_TOPIC, Image, image_cb)
+    rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('rostesting_node')
+    print('starting...')
+    try:
+        run()
+    except KeyboardInterrupt:
+        print('break')

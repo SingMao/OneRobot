@@ -26,11 +26,13 @@ if #arg < 2 then
 end
 
 -- Load the model
-model = torch.load(arg[1]):cuda()
+model = torch.load(arg[1], 'ascii')
+model = model:cuda()
 local softMaxLayer = cudnn.SoftMax():cuda()
 
 -- add Softmax layer
 model:add(softMaxLayer)
+
 
 -- Evaluate mode
 model:evaluate()
